@@ -35,10 +35,7 @@ let links = (await page.$eval(elementsSelector.links, (el) => el.innerText)).spl
 browser.on("targetcreated", async (target) => {
   if (target.type() == "page") {
     const page = await target.page();
-    const url = page?.url();
-    if (!url?.match(/about|fucking|paste/)) {
-      await page?.close();
-    }
+    await page?.close();
   }
 });
 
@@ -49,29 +46,25 @@ try {
 
   for (const link of links) {
     console.log(`Downloading: ${link}...`);
-    const dlPage = await browser.newPage();
-    await dlPage.goto(link);
-    await dlPage.waitForSelector(elementsSelector.filename);
-    const filename = await dlPage.$eval(elementsSelector.filename, (el) => el.innerText);
+    await page.goto(link);
+    await page.waitForSelector(elementsSelector.filename);
+    const filename = await page.$eval(elementsSelector.filename, (el) => el.innerText);
 
     if (await exists(join(downloadDir, filename))) {
       console.log(`File exists: ${filename}...`);
-      await dlPage.close();
       continue;
     }
 
     while (await checkDownloads()) {
       console.log("Trying to download...");
 
-      const dlButton = await dlPage.waitForSelector(".link-button", {
+      const dlButton = await page.waitForSelector(".link-button", {
         timeout: 1000,
       });
       await dlButton?.click();
 
       await sleep(2000);
     }
-
-    await dlPage.close();
 
     while (!(await checkDownloads())) {
       await sleep(1000);
